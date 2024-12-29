@@ -9,8 +9,7 @@ from pydantic import BaseModel, Field
 import pandas as pd
 from typing import Dict, List, Tuple
 import json
-import streamlit as st
-
+#import streamlit as st
 
 class Reasoning(BaseModel):
     pattern_type: str = Field(description="Name of the detected threat pattern")
