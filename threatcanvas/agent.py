@@ -1,7 +1,6 @@
 from threatcanvas.client import LLMClient
 from langchain.agents.agent_types import AgentType
 from langchain_experimental.agents import create_pandas_dataframe_agent
-import pandas as pd
 
 def get_response(df, verbose=False, agent_type=AgentType.OPENAI_FUNCTIONS, allow_dangerous_code=True, handle_parsing_errors=True):
     """Create a pandas DataFrame agent for the given DataFrame.
@@ -31,6 +30,7 @@ def get_response(df, verbose=False, agent_type=AgentType.OPENAI_FUNCTIONS, allow
     return agent
 
 """
+import pandas as pd
 if __name__ == "__main__":
     df = pd.read_csv("data/Linux.csv")
     agent = get_response(df, verbose=True)

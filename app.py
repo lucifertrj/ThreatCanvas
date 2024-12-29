@@ -369,6 +369,42 @@ def process_uploaded_file(file_path):
         st.error(f"Error processing file: {str(e)}")
         return False
 
+def delete_batch_file(file_name):
+    """Delete a batch file from the data center"""
+    try:
+        os.remove(os.path.join("data_center", file_name))
+        return True
+    except Exception as e:
+        st.error(f"Error deleting file: {e}")
+        return False
+
+def display_data_center():
+    """Display data center content with file management"""
+    st.header("Data Center")
+    if os.path.exists("data_center"):
+        files = sorted(os.listdir("data_center"), reverse=True)  # Sort by newest first
+        if files:
+            # Only keep the most recent 15 files
+            files = files[:15]
+            
+            for file in files:
+                col1, col2, col3 = st.columns([0.1, 0.8, 0.1])
+                with col2:
+                    if st.button(f"📄 {file}", key=f"view_{file}"):
+                        with open(os.path.join("data_center", file)) as f:
+                            batch_data = json.load(f)
+                            st.json(batch_data)
+                with col3:
+                    if st.button("❌", key=f"delete_{file}"):
+                        if delete_batch_file(file):
+                            st.success(f"Deleted {file}")
+                            time.sleep(1)  # Brief pause for user feedback
+                            st.rerun()  # Refresh the page
+        else:
+            st.info("No batch data available yet.")
+    else:
+        st.info("Data center storage not initialized yet.")
+
 def main():
     with st.sidebar:
         st.title("Configuration")
@@ -392,26 +428,31 @@ def main():
     tabs = create_tabs()
     
     with tabs[0]:
+        with st.expander("Dataset Preview", expanded=False):
+            df = pd.read_csv(st.session_state.file_path)
+            st.dataframe(df.head(10))
+
         col1, col2 = st.columns([2, 2])
         with col1:
             interval = st.number_input("seconds-per interval", min_value=1, value=30)
             
         if st.button("Start Monitoring"):
-            while True:
-                metrics, patterns = st.session_state.log_processor.process_logs()
-                active_threats = get_active_threats(patterns)
-                
-                save_batch_data(
-                    patterns, 
-                    st.session_state.log_processor.current_batch_id,
-                    metrics
-                )
-                
-                display_metrics(metrics, active_threats)
-                display_abnormal_patterns(patterns)
+            with st.spinner("Monitoring logs..."):
+                while True:
+                    metrics, patterns = st.session_state.log_processor.process_logs()
+                    active_threats = get_active_threats(patterns)
+                    
+                    save_batch_data(
+                        patterns, 
+                        st.session_state.log_processor.current_batch_id,
+                        metrics
+                    )
+                    
+                    display_metrics(metrics, active_threats)
+                    display_abnormal_patterns(patterns)
 
-                time.sleep(interval)
-                st.rerun()
+                    time.sleep(interval)
+                    st.rerun()
     
     with tabs[1]:
         st.header("Periodic Analysis Summary")
@@ -423,19 +464,7 @@ def main():
         create_chat_interface()
     
     with tabs[3]:
-        st.header("Data Center")
-        if os.path.exists("data_center"):
-            files = os.listdir("data_center")
-            if files:
-                selected_file = st.selectbox("Select batch to view", files)
-                if selected_file:
-                    with open(os.path.join("data_center", selected_file)) as f:
-                        batch_data = json.load(f)
-                        st.json(batch_data)
-            else:
-                st.info("No batch data available yet.")
-        else:
-            st.info("Data center storage not initialized yet.")
+        display_data_center()
 
 if __name__ == "__main__":
     main()
