@@ -412,27 +412,30 @@ def main():
         # Add option to use sample data
         use_sample_data = st.checkbox("Use sample data", value=False)
         
-        if use_sample_data:
-            if not st.session_state.file_uploaded:
-                sample_file_path = "data/access_logs.csv"
-                if os.path.exists(sample_file_path):
-                    if process_uploaded_file(sample_file_path):
-                        st.session_state.file_path = sample_file_path
-                        st.session_state.file_uploaded = True
-                        st.session_state.messages = []
-                        st.success("Sample data loaded successfully!")
-                else:
-                    st.error("Sample data file not found!")
-        else:
-            uploaded_file = st.file_uploader("Upload Log File (CSV)", type=["csv"])
-            if uploaded_file is not None and not st.session_state.file_uploaded:
-                file_path = save_uploaded_file(uploaded_file)
-                if file_path:
-                    if process_uploaded_file(file_path):
-                        st.session_state.file_path = file_path
-                        st.session_state.file_uploaded = True
-                        st.session_state.messages = []
-                        st.success("File uploaded and processed successfully!")
+        # Always show file uploader
+        uploaded_file = st.file_uploader("Upload Log File (CSV)", type=["csv"])
+        
+        # Handle sample data
+        if use_sample_data and not st.session_state.file_uploaded:
+            sample_file_path = "data/access_logs.csv"
+            if os.path.exists(sample_file_path):
+                if process_uploaded_file(sample_file_path):
+                    st.session_state.file_path = sample_file_path
+                    st.session_state.file_uploaded = True
+                    st.session_state.messages = []
+                    st.success("Sample data loaded successfully!")
+            else:
+                st.error("Sample data file not found!")
+        
+        # Handle file upload - this will override sample data if present
+        if uploaded_file is not None:
+            file_path = save_uploaded_file(uploaded_file)
+            if file_path:
+                if process_uploaded_file(file_path):
+                    st.session_state.file_path = file_path
+                    st.session_state.file_uploaded = True
+                    st.session_state.messages = []
+                    st.success("File uploaded and processed successfully!")
     
     # Main content
     st.title("Threat Canvas Dashboard 🌐")
